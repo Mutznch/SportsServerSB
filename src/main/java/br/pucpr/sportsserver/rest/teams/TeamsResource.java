@@ -1,5 +1,6 @@
-package br.pucpr.sportsserver.rest.sports;
+package br.pucpr.sportsserver.rest.teams;
 
+import br.pucpr.sportsserver.rest.sports.SportsService;
 import br.pucpr.sportsserver.rest.sports.response.SportResponse;
 import br.pucpr.sportsserver.rest.users.User;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -13,21 +14,25 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/sports")
-public class SportsResource {
-    private SportsService service;
+@RequestMapping("/teams")
+public class TeamsResource {
+    private TeamsService service;
 
-    public SportsResource(SportsService service) {
+    public TeamsResource(TeamsService service) {
         this.service = service;
-        this.service.createSports();
     }
 
     @GetMapping
     @Transactional
-    public List<String> searchSport(@Valid @RequestParam(value = "userId", required = false) Long userId) {
-        return service.search(userId);
+    public List<String> searchTeams(
+            @Valid @RequestParam(value = "userId", required = false) Long userId,
+            @Valid @RequestParam(value = "username", required = false) String username,
+            @Valid @RequestParam(value = "name", required = false) String name,
+            @Valid @RequestParam(value = "sport", required = false) String sport
+    ) {
+        return service.search(userId, username, name, sport);
     }
-
+    /*
     @GetMapping("me")
     @Transactional
     @SecurityRequirement(name = "AuthServer")
@@ -52,5 +57,5 @@ public class SportsResource {
     public ResponseEntity<Void> delete(@PathVariable("name") String name) {
         service.delete(name);
         return ResponseEntity.ok().build();
-    }
+    }*/
 }

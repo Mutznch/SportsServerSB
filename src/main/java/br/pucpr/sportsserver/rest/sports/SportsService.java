@@ -34,7 +34,7 @@ public class SportsService {
         if (name == null)
             throw new BadRequestException("Sport cannot be null!");
         if (sportsRepository.existsById(name)) return new SportResponse(name);
-        var sport = sportsRepository.save(new Sport(name, new HashSet<>()));
+        var sport = sportsRepository.save(new Sport(name));
         return new SportResponse(sport.getName());
     }
 

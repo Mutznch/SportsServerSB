@@ -2,13 +2,14 @@ package br.pucpr.sportsserver.rest.users;
 
 import br.pucpr.sportsserver.rest.comments.Comment;
 import br.pucpr.sportsserver.rest.sports.Sport;
+import br.pucpr.sportsserver.rest.teams.Team;
+import br.pucpr.sportsserver.rest.users.friends.FriendRequest;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.Length;
-import org.hibernate.validator.constraints.br.CPF;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -51,6 +52,32 @@ public class User {
     private Set<Comment> commentsFromUser;
     @OneToMany(mappedBy = "to")
     private Set<Comment> commentsToUser;
+    @ManyToMany(cascade = CascadeType.ALL)
+    @JoinTable(name="blocked_users",
+            joinColumns={@JoinColumn(name="user_id")},
+            inverseJoinColumns={@JoinColumn(name="blocked_user_id")})
+    private Set<User> blockedUsers = new HashSet<>();
+    @ManyToMany(cascade = CascadeType.ALL, mappedBy = "blockedUsers")
+    private Set<User> blockedByOthers = new HashSet<>();
+    @ManyToMany(cascade = CascadeType.ALL)
+    @JoinTable(name="user_followers",
+            joinColumns={@JoinColumn(name="user_id")},
+            inverseJoinColumns={@JoinColumn(name="following_user_id")})
+    private Set<User> followers = new HashSet<>();
+    @ManyToMany(cascade = CascadeType.ALL, mappedBy = "followers")
+    private Set<User> following = new HashSet<>();
+    @OneToMany(mappedBy = "from")
+    private Set<FriendRequest> friendRequestsFromUser = new HashSet<>();
+    @OneToMany(mappedBy = "to")
+    private Set<FriendRequest> friendRequestsToUser = new HashSet<>();
+    @OneToMany(mappedBy = "leader")
+    private Set<Team> ownedTeams = new HashSet<>();
+    @ManyToMany
+    @JoinTable(
+            name = "user_team",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "team_id"))
+    private Set<Team> allTeams = new HashSet<>();
     private Set<String> roles = new HashSet<>();
 
     public User(String username, String name, String password, String email, String cpf, String city, Integer age, Set<String> roles) {
@@ -75,6 +102,10 @@ public class User {
 
     public void addCommentTo(Comment comment) {
         commentsToUser.add(comment);
+    }
+
+    public void addTeam(Team team) {
+        allTeams.add(team);
     }
 
     @Override

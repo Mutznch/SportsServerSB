@@ -1,5 +1,6 @@
 package br.pucpr.sportsserver.rest.sports;
 
+import br.pucpr.sportsserver.rest.teams.Team;
 import br.pucpr.sportsserver.rest.users.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -19,6 +20,12 @@ public class Sport {
     private String name;
     @ManyToMany(mappedBy = "sports")
     private Set<User> users = new HashSet<>();
+    @OneToMany(mappedBy = "sport")
+    private Set<Team> teams = new HashSet<>();
+
+    public Sport(String name) {
+        this.name = name;
+    }
 
     public void addUser(User user) {
         users.add(user);
@@ -26,7 +33,8 @@ public class Sport {
 
     public void removeUsers() {
         users.forEach(u -> u.getSports().remove(this));
-        users.clear(); }
+        users.clear();
+    }
 
     public int hashCode() {
         return 1;

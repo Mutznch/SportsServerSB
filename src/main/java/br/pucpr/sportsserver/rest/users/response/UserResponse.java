@@ -1,14 +1,11 @@
 package br.pucpr.sportsserver.rest.users.response;
 
-import jakarta.persistence.Column;
-import jakarta.validation.constraints.*;
+import br.pucpr.sportsserver.rest.teams.response.TeamResponse;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Data
@@ -23,5 +20,9 @@ public class UserResponse {
     private String city;
     private Integer age;
     private Set<String> sports = new HashSet<>();
+    private Set<String> friends = new HashSet<>();
+    private Set<String> followers = new HashSet<>();
+    private Set<String> following = new HashSet<>();
+    private Set<String> teams = new HashSet<>();
     private Set<String> roles = new HashSet<>();
 }

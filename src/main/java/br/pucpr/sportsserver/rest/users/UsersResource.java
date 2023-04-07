@@ -1,5 +1,6 @@
 package br.pucpr.sportsserver.rest.users;
 
+import br.pucpr.sportsserver.lib.exception.NotFoundException;
 import br.pucpr.sportsserver.lib.security.JWT;
 import br.pucpr.sportsserver.rest.users.request.Login;
 import br.pucpr.sportsserver.rest.users.request.UserRequest;
@@ -14,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -43,7 +45,9 @@ public class UsersResource {
 
     @PostMapping
     @Transactional
-    public UserResponse add(@Valid @RequestBody UserRequest reqUser) { return service.addUser(reqUser); }
+    public UserResponse add(@Valid @RequestBody UserRequest reqUser) {
+        return service.addUser(reqUser);
+    }
 
     @GetMapping("me")
     @Transactional
@@ -63,6 +67,60 @@ public class UsersResource {
             @Valid @RequestParam(value = "sport", required = false) String sport
     ) { return service.searchUser(id, username, city, sport); }
 
+    @GetMapping("friends")
+    @Transactional
+    @SecurityRequirement(name = "AuthServer")
+    @RolesAllowed({"USER"})
+    public List<String> searchMeFriends() {
+        var user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        var friends = service.searchFriends(user.getId());
+        if (friends.isEmpty())
+            throw new NotFoundException("You have no friends yet");
+        return friends.stream().toList();
+    }
+
+    @GetMapping("me/friendRequests")
+    @Transactional
+    @SecurityRequirement(name = "AuthServer")
+    @RolesAllowed({"USER"})
+    public List<String> searchMyFriendRequests() {
+        var user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        var friends = service.searchMyFriendRequests(user.getId());
+        if (friends.isEmpty())
+            throw new NotFoundException("You have no friend requests pending");
+        return friends;
+    }
+
+    @GetMapping("friendRequests/me")
+    @Transactional
+    @SecurityRequirement(name = "AuthServer")
+    @RolesAllowed({"USER"})
+    public List<String> searchFriendRequests() {
+        var user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        var friends = service.searchFriendRequests(user.getId());
+        if (friends.isEmpty())
+            throw new NotFoundException("You have no friend requests pending");
+        return friends;
+    }
+
+    @GetMapping("friends/{username}")
+    @Transactional
+    public List<String> searchFriends(@Valid @PathVariable("username") String username) {
+        var friends = service.searchFriendsByUsername(username);
+        if (friends.isEmpty())
+            throw new NotFoundException(username + " has no friends yet");
+        return friends.stream().toList();
+    }
+
+    @PostMapping("friends/{username}")
+    @Transactional
+    @SecurityRequirement(name = "AuthServer")
+    @RolesAllowed({"USER"})
+    public ResponseEntity<String> requestFriend(@Valid @PathVariable("username") String to) {
+        var user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return ResponseEntity.ok().body(service.requestFriend(user, to));
+    }
+
     @DeleteMapping("me")
     @Transactional
     @SecurityRequirement(name = "AuthServer")
@@ -79,6 +137,16 @@ public class UsersResource {
     @RolesAllowed({"ADMIN"})
     public ResponseEntity<Void> deleteUser(@Valid @PathVariable("id") Long id) {
         service.delete(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("friends/{username}")
+    @Transactional
+    @SecurityRequirement(name = "AuthServer")
+    @RolesAllowed({"USER"})
+    public ResponseEntity<Void> removeFriend(@Valid @PathVariable("username") String friend) {
+        var user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        service.removeFriend(user, friend);
         return ResponseEntity.ok().build();
     }
 
