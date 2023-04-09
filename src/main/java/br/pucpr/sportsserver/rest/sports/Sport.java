@@ -1,5 +1,6 @@
 package br.pucpr.sportsserver.rest.sports;
 
+import br.pucpr.sportsserver.rest.discussions.Discussion;
 import br.pucpr.sportsserver.rest.teams.Team;
 import br.pucpr.sportsserver.rest.users.User;
 import jakarta.persistence.*;
@@ -22,6 +23,8 @@ public class Sport {
     private Set<User> users = new HashSet<>();
     @OneToMany(mappedBy = "sport")
     private Set<Team> teams = new HashSet<>();
+    @OneToMany(mappedBy = "sport")
+    private Set<Discussion> discussions = new HashSet<>();
 
     public Sport(String name) {
         this.name = name;

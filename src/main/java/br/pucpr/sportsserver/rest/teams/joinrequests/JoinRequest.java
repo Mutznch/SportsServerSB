@@ -2,10 +2,7 @@ package br.pucpr.sportsserver.rest.teams.joinrequests;
 
 import br.pucpr.sportsserver.rest.teams.Team;
 import br.pucpr.sportsserver.rest.users.User;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -19,10 +16,10 @@ public class JoinRequest {
     @GeneratedValue
     private Long id;
     @NotNull
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     private User user;
     @NotNull
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     private Team team;
     @NotNull
     private Boolean invited;

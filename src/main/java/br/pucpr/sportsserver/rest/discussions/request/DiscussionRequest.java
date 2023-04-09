@@ -1,6 +1,5 @@
-package br.pucpr.sportsserver.rest.teams.request;
+package br.pucpr.sportsserver.rest.discussions.request;
 
-import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -10,11 +9,11 @@ import org.hibernate.validator.constraints.Length;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class TeamRequest {
-    @NotBlank
-    @Length(min = 3, max = 30)
-    @Column(unique = true)
-    private String name;
-    @NotBlank
+public class DiscussionRequest {
     private String sport;
+    @NotBlank
+    @Length(min = 3, max = 40)
+    private String title;
+    @NotBlank
+    private String text;
 }

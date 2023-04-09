@@ -1,10 +1,7 @@
 package br.pucpr.sportsserver.rest.users.friends;
 
 import br.pucpr.sportsserver.rest.users.User;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -17,10 +14,10 @@ public class FriendRequest {
     @Id @GeneratedValue
     private Long id;
     @NotNull
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     private User from;
     @NotNull
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     private User to;
 
     public FriendRequest(User from, User to) {

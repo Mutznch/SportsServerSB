@@ -1,6 +1,8 @@
 package br.pucpr.sportsserver.rest.users;
 
 import br.pucpr.sportsserver.rest.comments.Comment;
+import br.pucpr.sportsserver.rest.discussions.Discussion;
+import br.pucpr.sportsserver.rest.discussions.replies.Reply;
 import br.pucpr.sportsserver.rest.sports.Sport;
 import br.pucpr.sportsserver.rest.teams.Team;
 import br.pucpr.sportsserver.rest.teams.joinrequests.JoinRequest;
@@ -43,7 +45,7 @@ public class User {
     @NotNull
     @Min(13) @Max(120)
     private Integer age;
-    @ManyToMany
+    @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(
             name = "user_sport",
             joinColumns = @JoinColumn(name = "user_id"),
@@ -73,7 +75,7 @@ public class User {
     private Set<FriendRequest> friendRequestsToUser = new HashSet<>();
     @OneToMany(mappedBy = "leader")
     private Set<Team> ownedTeams = new HashSet<>();
-    @ManyToMany
+    @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(
             name = "user_team",
             joinColumns = @JoinColumn(name = "user_id"),
@@ -81,6 +83,10 @@ public class User {
     private Set<Team> allTeams = new HashSet<>();
     @OneToMany(mappedBy = "user")
     private Set<JoinRequest> teamJoinRequests = new HashSet<>();
+    @OneToMany(mappedBy = "user")
+    private Set<Discussion> discussions = new HashSet<>();
+    @OneToMany(mappedBy = "user")
+    private Set<Reply> replies = new HashSet<>();
     private Set<String> roles = new HashSet<>();
 
     public User(String username, String name, String password, String email, String cpf, String city, Integer age, Set<String> roles) {
