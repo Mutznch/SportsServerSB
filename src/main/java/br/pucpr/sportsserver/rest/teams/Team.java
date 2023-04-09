@@ -1,6 +1,7 @@
 package br.pucpr.sportsserver.rest.teams;
 
 import br.pucpr.sportsserver.rest.sports.Sport;
+import br.pucpr.sportsserver.rest.teams.joinrequests.JoinRequest;
 import br.pucpr.sportsserver.rest.users.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -28,6 +29,8 @@ public class Team {
     private User leader;
     @ManyToMany(mappedBy = "allTeams")
     private Set<User> members = new HashSet<>();
+    @OneToMany(mappedBy = "team")
+    private Set<JoinRequest> joinRequests = new HashSet<>();
 
     public Team(String name, Sport sport, User user) {
         this.name = name;
@@ -51,5 +54,11 @@ public class Team {
         members.forEach(m -> m.getAllTeams().remove(this));
         leader = null;
         members.clear();
+    }
+
+    public void changeLeader(User newLeader) {
+        leader.getOwnedTeams().remove(this);
+        newLeader.getOwnedTeams().add(this);
+        leader = newLeader;
     }
 }

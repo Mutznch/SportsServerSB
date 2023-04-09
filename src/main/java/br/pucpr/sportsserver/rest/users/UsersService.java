@@ -3,7 +3,11 @@ package br.pucpr.sportsserver.rest.users;
 import br.pucpr.sportsserver.lib.exception.BadRequestException;
 import br.pucpr.sportsserver.lib.exception.NotFoundException;
 import br.pucpr.sportsserver.rest.comments.CommentsService;
+import br.pucpr.sportsserver.rest.sports.Sport;
 import br.pucpr.sportsserver.rest.sports.SportsRepository;
+import br.pucpr.sportsserver.rest.teams.Team;
+import br.pucpr.sportsserver.rest.teams.TeamsRepository;
+import br.pucpr.sportsserver.rest.teams.TeamsService;
 import br.pucpr.sportsserver.rest.users.friends.Friend;
 import br.pucpr.sportsserver.rest.users.friends.FriendRequest;
 import br.pucpr.sportsserver.rest.users.friends.FriendRequestsRepository;
@@ -23,19 +27,22 @@ public class UsersService {
     private CommentsService commentsService;
     private FriendRequestsRepository friendRequestsRepository;
     private FriendsRepository friendsRepository;
+    private TeamsService teamsService;
 
     public UsersService(
             UsersRepository usersRepository,
             SportsRepository sportsRepository,
             CommentsService commentsService,
             FriendRequestsRepository friendRequestsRepository,
-            FriendsRepository friendsRepository
+            FriendsRepository friendsRepository,
+            TeamsService teamsService
     ) {
         this.usersRepository = usersRepository;
         this.sportsRepository = sportsRepository;
         this.commentsService = commentsService;
         this.friendRequestsRepository = friendRequestsRepository;
         this.friendsRepository = friendsRepository;
+        this.teamsService = teamsService;
     }
 
     private User reqToUser(UserRequest reqUser) {
@@ -63,11 +70,11 @@ public class UsersService {
                 user.getCpf(),
                 user.getCity(),
                 user.getAge(),
-                user.getSports().stream().map(f -> f.getName()).collect(Collectors.toSet()),
+                user.getSports().stream().map(Sport::getName).collect(Collectors.toSet()),
                 searchFriends(user.getId()),
-                user.getFollowers().stream().map(f -> f.getUsername()).collect(Collectors.toSet()),
-                user.getFollowing().stream().map(f -> f.getUsername()).collect(Collectors.toSet()),
-                user.getAllTeams().stream().map(t -> t.getName()).collect(Collectors.toSet()),
+                user.getFollowers().stream().map(User::getUsername).collect(Collectors.toSet()),
+                user.getFollowing().stream().map(User::getUsername).collect(Collectors.toSet()),
+                user.getAllTeams().stream().map(Team::getName).collect(Collectors.toSet()),
                 user.getRoles()
         );
     }
@@ -143,11 +150,17 @@ public class UsersService {
         return userToRes(usersRepository.save(user));
     }
 
-    public String requestFriend(User from, String toUsername) {
+    public String requestFriend(Long fromId, String toUsername) {
+        var from = usersRepository.findById(fromId)
+                .orElseThrow(() -> new NotFoundException("Id \"" + fromId + "\" Not Found"));
         if (from.getUsername() == toUsername)
             throw new BadRequestException("Can't send a friend request to yourself");
         var to = usersRepository.findByUsername(toUsername)
                 .orElseThrow(() -> new NotFoundException("Username \"" + toUsername + "\" Not Found"));
+        if (from.getBlockedUsers().contains(to))
+            throw new BadRequestException("Can't be friend with a user you've blocked");
+        if (from.getBlockedByOthers().contains(to))
+            throw new BadRequestException("Unable to send a friend request to this user");
         if (friendRequestsRepository.existsByFromIdAndToId(from.getId(), to.getId()))
             throw new BadRequestException("Friend Request already sent to that user");
         if (friendsRepository.existsByUserIdAndFriendId(from.getId(),to.getId()))
@@ -162,11 +175,11 @@ public class UsersService {
         friendsRepository.save(new Friend(user1, user2));
         friendsRepository.save(new Friend(user2, user1));
 
-        friendRequestsRepository.deleteById(
-                friendRequestsRepository
-                        .findAllByFromIdAndToId(user2.getId(), user1.getId())
-                        .get(0).getId()
-        );
+        var friendRequest = friendRequestsRepository
+                .findAllByFromIdAndToId(user2.getId(), user1.getId()).get(0);
+        friendRequest.removeUsers();
+        friendRequestsRepository.deleteById(friendRequest.getId());
+
         return "You and " + user2 + " are now friends!";
     }
 
@@ -196,18 +209,30 @@ public class UsersService {
                 .toList();
     }
 
-    public void removeFriend(User user1, String user2Username) {
+    public void removeFriend(Long user1Id, String user2Username) {
+        var user1 = usersRepository.findById(user1Id)
+                .orElseThrow(() -> new NotFoundException("Id \"" + user1Id + "\" Not Found"));
         if (user1.getUsername() == user2Username)
             throw new BadRequestException("Can't be friend with yourself");
         var user2 = usersRepository.findByUsername(user2Username)
                 .orElseThrow(() -> new NotFoundException("Username \"" + user2Username + "\" Not Found"));
         if (!friendsRepository.existsByUserIdAndFriendId(user1.getId(), user2.getId())) {
-            List<FriendRequest> friendRequest = friendRequestsRepository
+            var friendRequest = friendRequestsRepository
                     .findAllByFromIdAndToId(user1.getId(), user2.getId());
-            if (friendRequest.isEmpty())
-                throw new BadRequestException("You and " + user2Username + " aren't friends");
-            friendRequestsRepository.deleteById(friendRequest.get(0).getId());
-            return;
+            var friendRequestTo = friendRequestsRepository
+                    .findAllByFromIdAndToId(user2.getId(), user1.getId());
+            if (!friendRequest.isEmpty()) {
+                friendRequest.get(0).removeUsers();
+                friendRequestsRepository.deleteById(friendRequest.get(0).getId());
+                return;
+            }
+            if (!friendRequestTo.isEmpty()) {
+                friendRequestTo.get(0).removeUsers();
+                friendRequestsRepository.deleteById(friendRequestTo.get(0).getId());
+                return;
+            }
+            throw new BadRequestException("You and " + user2Username + " aren't friends");
+
         }
         friendsRepository.findAllByUserIdAndFriendId(user1.getId(), user2.getId())
                 .forEach(f -> friendsRepository.deleteById(f.getId()));
@@ -215,20 +240,127 @@ public class UsersService {
                 .forEach(f -> friendsRepository.deleteById(f.getId()));
     }
 
+    public List<String> searchFollowers(Long userId) {
+        return usersRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Id \"" + userId + "\" Not Found"))
+                .getFollowers().stream().map(User::getUsername).toList();
+    }
+
+    public List<String> searchFollowersByUsername(String username) {
+        return searchFollowers(
+                usersRepository.findByUsername(username)
+                .orElseThrow(() -> new NotFoundException("Username \"" + username + "\" Not Found"))
+                .getId()
+        );
+    }
+
+    public List<String> searchFollowing(Long userId) {
+        return usersRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Id \"" + userId + "\" Not Found"))
+                .getFollowing().stream().map(User::getUsername).toList();
+    }
+
+    public List<String> searchFollowingByUsername(String username) {
+        return searchFollowing(
+                usersRepository.findByUsername(username)
+                .orElseThrow(() -> new NotFoundException("Username \"" + username + "\" Not Found"))
+                .getId()
+        );
+    }
+
+    public List<String> searchBlocked(Long userId) {
+        return usersRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Id \"" + userId + "\" Not Found"))
+                .getBlockedUsers().stream().map(User::getUsername).toList();
+    }
+
+    public void followUser(Long userId, String followUsername) {
+        var user = usersRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Id \"" + userId + "\" Not Found"));
+        var follow = usersRepository.findByUsername(followUsername)
+                .orElseThrow(() -> new NotFoundException("Username \"" + followUsername + "\" Not Found"));
+        if (user.getBlockedUsers().contains(follow))
+            throw new BadRequestException("Can't follow a user you've blocked");
+        if (user.getBlockedByOthers().contains(follow))
+            throw new BadRequestException("Unable follow this user");
+        if (user.getFollowing().contains(follow))
+            throw new BadRequestException("You already followed this user");
+        user.getFollowing().add(follow);
+        follow.getFollowers().add(user);
+        usersRepository.save(user);
+        usersRepository.save(follow);
+    }
+
+    public void unfollowUser(Long userId, String followUsername) {
+        var user = usersRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Id \"" + userId + "\" Not Found"));
+        var follow = usersRepository.findByUsername(followUsername)
+                .orElseThrow(() -> new NotFoundException("Username \"" + followUsername + "\" Not Found"));
+        if (!user.getFollowing().contains(follow))
+            throw new BadRequestException("You don't follow this user");
+        user.getFollowing().remove(follow);
+        follow.getFollowers().remove(user);
+        usersRepository.save(user);
+        usersRepository.save(follow);
+    }
+
+    public void blockUser(Long userId, String blockUsername) {
+        var user = usersRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Id \"" + userId + "\" Not Found"));
+        var block = usersRepository.findByUsername(blockUsername)
+                .orElseThrow(() -> new NotFoundException("Username \"" + blockUsername + "\" Not Found"));
+        if (user.getBlockedUsers().contains(block))
+            throw new BadRequestException("You've already blocked this user");
+        user.getBlockedUsers().add(block);
+        block.getBlockedByOthers().add(user);
+
+        user.getFollowers().remove(block);
+        user.getFollowing().remove(block);
+        block.getFollowers().remove(user);
+        block.getFollowing().remove(user);
+
+        try { removeFriend(userId, blockUsername); }
+        catch (BadRequestException ignored) {}
+
+        usersRepository.save(user);
+        usersRepository.save(block);
+    }
+
+    public void unblockUser(Long userId, String blockUsername) {
+        var user = usersRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Id \"" + userId + "\" Not Found"));
+        var block = usersRepository.findByUsername(blockUsername)
+                .orElseThrow(() -> new NotFoundException("Username \"" + blockUsername + "\" Not Found"));
+        if (!user.getBlockedUsers().contains(block))
+            throw new BadRequestException("You haven't block this user");
+        user.getBlockedUsers().remove(block);
+        block.getBlockedByOthers().remove(user);
+        usersRepository.save(user);
+        usersRepository.save(block);
+    }
+
     public void delete(Long id){
         var user = usersRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Id \"" + id + "\" Not Found"));
         try { commentsService.search(null, user.getUsername(), null)
                     .forEach(c -> commentsService.deleteById(c.getId()));
-        } catch (NotFoundException e) {}
+        } catch (NotFoundException ignored) {}
         try { commentsService.search(null, null, user.getUsername())
                     .forEach(c -> commentsService.deleteById(c.getId()));
-        } catch (NotFoundException e) {}
+        } catch (NotFoundException ignored) {}
 
         friendsRepository.findAllByUserId(id).forEach(f -> friendsRepository.deleteById(f.getId()));
         friendsRepository.findAllByFriendId(id).forEach(f -> friendsRepository.deleteById(f.getId()));
-        friendRequestsRepository.findAllByFromId(id).forEach(f -> friendsRepository.deleteById(f.getId()));
-        friendRequestsRepository.findAllByToId(id).forEach(f -> friendsRepository.deleteById(f.getId()));
+        friendRequestsRepository.findAllByFromId(id).forEach(f -> {
+            f.removeUsers();
+            friendRequestsRepository.deleteById(f.getId());
+        });
+        friendRequestsRepository.findAllByToId(id).forEach(f -> {
+            f.removeUsers();
+            friendRequestsRepository.deleteById(f.getId());
+        });
+        user.getOwnedTeams().forEach(t -> teamsService.deleteTeam(id, t.getName()));
+        user.getAllTeams().forEach(t -> teamsService.exitTeam(id, t.getName()));
 
         usersRepository.deleteById(id);
     }

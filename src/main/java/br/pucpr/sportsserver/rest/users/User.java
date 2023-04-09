@@ -3,6 +3,7 @@ package br.pucpr.sportsserver.rest.users;
 import br.pucpr.sportsserver.rest.comments.Comment;
 import br.pucpr.sportsserver.rest.sports.Sport;
 import br.pucpr.sportsserver.rest.teams.Team;
+import br.pucpr.sportsserver.rest.teams.joinrequests.JoinRequest;
 import br.pucpr.sportsserver.rest.users.friends.FriendRequest;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
@@ -78,6 +79,8 @@ public class User {
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "team_id"))
     private Set<Team> allTeams = new HashSet<>();
+    @OneToMany(mappedBy = "user")
+    private Set<JoinRequest> teamJoinRequests = new HashSet<>();
     private Set<String> roles = new HashSet<>();
 
     public User(String username, String name, String password, String email, String cpf, String city, Integer age, Set<String> roles) {

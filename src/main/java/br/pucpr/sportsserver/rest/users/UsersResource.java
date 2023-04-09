@@ -67,18 +67,6 @@ public class UsersResource {
             @Valid @RequestParam(value = "sport", required = false) String sport
     ) { return service.searchUser(id, username, city, sport); }
 
-    @GetMapping("friends")
-    @Transactional
-    @SecurityRequirement(name = "AuthServer")
-    @RolesAllowed({"USER"})
-    public List<String> searchMeFriends() {
-        var user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        var friends = service.searchFriends(user.getId());
-        if (friends.isEmpty())
-            throw new NotFoundException("You have no friends yet");
-        return friends.stream().toList();
-    }
-
     @GetMapping("me/friendRequests")
     @Transactional
     @SecurityRequirement(name = "AuthServer")
@@ -103,7 +91,19 @@ public class UsersResource {
         return friends;
     }
 
-    @GetMapping("friends/{username}")
+    @GetMapping("friends")
+    @Transactional
+    @SecurityRequirement(name = "AuthServer")
+    @RolesAllowed({"USER"})
+    public List<String> searchMeFriends() {
+        var user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        var friends = service.searchFriends(user.getId());
+        if (friends.isEmpty())
+            throw new NotFoundException("You have no friends yet");
+        return friends.stream().toList();
+    }
+
+    @GetMapping("{username}/friends")
     @Transactional
     public List<String> searchFriends(@Valid @PathVariable("username") String username) {
         var friends = service.searchFriendsByUsername(username);
@@ -112,13 +112,107 @@ public class UsersResource {
         return friends.stream().toList();
     }
 
+    @GetMapping("followers")
+    @Transactional
+    @SecurityRequirement(name = "AuthServer")
+    @RolesAllowed({"USER"})
+    public List<String> searchMeFollowers() {
+        var user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        var followers = service.searchFollowers(user.getId());
+        if (followers.isEmpty())
+            throw new NotFoundException("You have no followers yet");
+        return followers;
+    }
+
+    @GetMapping("following")
+    @Transactional
+    @SecurityRequirement(name = "AuthServer")
+    @RolesAllowed({"USER"})
+    public List<String> searchMeFollowing() {
+        var user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        var following = service.searchFollowing(user.getId());
+        if (following.isEmpty())
+            throw new NotFoundException("You haven't follow anyone yet");
+        return following;
+    }
+
+    @GetMapping("{username}/followers")
+    @Transactional
+    public List<String> searchFollowersByUsername(@Valid @PathVariable("username") String username) {
+        var followers = service.searchFollowersByUsername(username);
+        if (followers.isEmpty())
+            throw new NotFoundException(username + " has no followers yet");
+        return followers;
+    }
+
+    @GetMapping("{username}/following")
+    @Transactional
+    public List<String> searchFollowingByUsername(@Valid @PathVariable("username") String username) {
+        var following = service.searchFollowingByUsername(username);
+        if (following.isEmpty())
+            throw new NotFoundException(username + " has not follow anyone yet");
+        return following;
+    }
+
+    @GetMapping("blocked")
+    @Transactional
+    @SecurityRequirement(name = "AuthServer")
+    @RolesAllowed({"USER"})
+    public List<String> searchBlocked() {
+        var user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        var blocked = service.searchBlocked(user.getId());
+        if (blocked.isEmpty())
+            throw new NotFoundException("You have no blocked users");
+        return blocked;
+    }
+
     @PostMapping("friends/{username}")
     @Transactional
     @SecurityRequirement(name = "AuthServer")
     @RolesAllowed({"USER"})
     public ResponseEntity<String> requestFriend(@Valid @PathVariable("username") String to) {
         var user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        return ResponseEntity.ok().body(service.requestFriend(user, to));
+        return ResponseEntity.ok().body(service.requestFriend(user.getId(), to));
+    }
+
+    @PostMapping("follow/{username}")
+    @Transactional
+    @SecurityRequirement(name = "AuthServer")
+    @RolesAllowed({"USER"})
+    public ResponseEntity<Void> followUser(@Valid @PathVariable("username") String to) {
+        var user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        service.followUser(user.getId(), to);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("unfollow/{username}")
+    @Transactional
+    @SecurityRequirement(name = "AuthServer")
+    @RolesAllowed({"USER"})
+    public ResponseEntity<String> unfollowUser(@Valid @PathVariable("username") String to) {
+        var user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        service.unfollowUser(user.getId(), to);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("block/{username}")
+    @Transactional
+    @SecurityRequirement(name = "AuthServer")
+    @RolesAllowed({"USER"})
+    public ResponseEntity<String> blockUser(@Valid @PathVariable("username") String to) {
+        var user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        service.blockUser(user.getId(), to);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("unblock/{username}")
+    @Transactional
+    @SecurityRequirement(name = "AuthServer")
+    @RolesAllowed({"USER"})
+    public ResponseEntity<String> unblockUser(@Valid @PathVariable("username") String to) {
+        var user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        service.unblockUser(user.getId(), to);
+        return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("me")
@@ -146,7 +240,7 @@ public class UsersResource {
     @RolesAllowed({"USER"})
     public ResponseEntity<Void> removeFriend(@Valid @PathVariable("username") String friend) {
         var user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        service.removeFriend(user, friend);
+        service.removeFriend(user.getId(), friend);
         return ResponseEntity.ok().build();
     }
 
