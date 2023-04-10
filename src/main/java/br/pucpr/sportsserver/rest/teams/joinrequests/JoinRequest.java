@@ -38,4 +38,9 @@ public class JoinRequest {
         this.user = null;
         this.team = null;
     }
+
+    @Override
+    public int hashCode() {
+        return 1;
+    }
 }

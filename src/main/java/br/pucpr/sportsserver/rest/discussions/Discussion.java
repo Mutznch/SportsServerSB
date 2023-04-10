@@ -37,4 +37,18 @@ public class Discussion {
         this.title = title;
         this.text = text;
     }
+
+    public void clearDiscussion() {
+        replies.forEach(Reply::clearReply);
+        replies.clear();
+        user.getDiscussions().remove(this);
+        user = null;
+        sport.getDiscussions().remove(this);
+        sport = null;
+    }
+
+    @Override
+    public int hashCode() {
+        return 1;
+    }
 }

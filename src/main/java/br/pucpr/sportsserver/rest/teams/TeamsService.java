@@ -83,9 +83,9 @@ public class TeamsService {
     public List<String> searchTeamJoinRequests(Long id, String name, boolean invited) {
         var team = teamsRepository.findByName(name)
                 .orElseThrow(() -> new NotFoundException("Team \"" + name + "\" Not Found"));
-        if (!usersRepository.existsById(id))
-            throw new NotFoundException("Id \"" + id + "\" Not Found");
-        if (team.getLeader().getId() != id)
+        var req = usersRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Id \"" + id + "\" Not Found"));
+        if (team.getLeader().getId() != id && !req.getRoles().contains("ADMIN"))
             throw new ForbiddenException("Only team leader can access this route");
         return invited ?
                 team.getJoinRequests().stream()
@@ -149,7 +149,9 @@ public class TeamsService {
                 .orElseThrow(() -> new NotFoundException("Username \"" + username + "\" Not Found"));
         var team = teamsRepository.findByName(name)
                 .orElseThrow(() -> new NotFoundException("Team \"" + name + "\" Not Found"));
-        if (team.getLeader().getId() != id)
+        var req = usersRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Id \"" + id + "\" Not Found"));
+        if (team.getLeader().getId() != id && !req.getRoles().contains("ADMIN"))
             throw new ForbiddenException("Only team leader can access this route");
         if (team.getMembers().contains(user))
             throw new BadRequestException(username + " already is a member of this team");
@@ -180,7 +182,9 @@ public class TeamsService {
                 .orElseThrow(() -> new NotFoundException("Username \"" + username + "\" Not Found"));
         var team = teamsRepository.findByName(name)
                 .orElseThrow(() -> new NotFoundException("Team \"" + name + "\" Not Found"));
-        if (team.getLeader().getId() != id)
+        var req = usersRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Id \"" + id + "\" Not Found"));
+        if (team.getLeader().getId() != id && !req.getRoles().contains("ADMIN"))
             throw new ForbiddenException("Only team leader can access this route");
         exitTeam(user.getId(), name);
     }
@@ -207,7 +211,9 @@ public class TeamsService {
     public void deleteTeam(Long id, String name) {
         var team = teamsRepository.findByName(name)
                 .orElseThrow(() -> new NotFoundException("Team \"" + name + "\" Not Found"));
-        if (team.getLeader().getId() != id)
+        var req = usersRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Id \"" + id + "\" Not Found"));
+        if (team.getLeader().getId() != id && !req.getRoles().contains("ADMIN"))
             throw new ForbiddenException("Only team leader can access this route");
         var joinRequests = joinRequestsRepository.findAllByTeamName(name);
         if (!joinRequests.isEmpty()) {
@@ -223,7 +229,9 @@ public class TeamsService {
     public TeamResponse updateTeam(Long id, String currentName, String newName, String newLeader, String sport) {
         var team = teamsRepository.findByName(currentName)
                 .orElseThrow(() -> new NotFoundException("Team \"" + currentName + "\" Not Found"));
-        if (team.getLeader().getId() != id)
+        var req = usersRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Id \"" + id + "\" Not Found"));
+        if (team.getLeader().getId() != id && !req.getRoles().contains("ADMIN"))
             throw new ForbiddenException("Only team leader can access this route");
         if (newName != null) {
             if (teamsRepository.existsByName(newName))

@@ -1,6 +1,7 @@
 package br.pucpr.sportsserver.lib.security;
 
 import br.pucpr.sportsserver.rest.users.User;
+import br.pucpr.sportsserver.rest.users.response.UserJWT;
 import br.pucpr.sportsserver.rest.users.response.UserResponse;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.jackson.io.JacksonDeserializer;
@@ -53,9 +54,8 @@ public class JWT {
     public static Date toDate(LocalDate date) {
         return Date.from(date.atStartOfDay(ZoneOffset.UTC).toInstant());
     }
-    public String createToken(UserResponse user) {
+    public String createToken(UserJWT user) {
         final var now = LocalDate.now();
-        user.setSports(null);
         return Jwts.builder()
                 .signWith(Keys.hmacShaKeyFor(settings.getSecret().getBytes()))
                 .serializeToJsonWith(new JacksonSerializer<>())

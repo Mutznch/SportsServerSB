@@ -20,4 +20,22 @@ public class Reply {
     private User user;
     @NotBlank
     private String text;
+
+    public Reply(Discussion discussion, User user, String text) {
+        this.discussion = discussion;
+        this.user = user;
+        this.text = text;
+    }
+
+    public void clearReply() {
+        discussion.getReplies().remove(this);
+        discussion = null;
+        user.getReplies().remove(this);
+        user = null;
+    }
+
+    @Override
+    public int hashCode() {
+        return 1;
+    }
 }

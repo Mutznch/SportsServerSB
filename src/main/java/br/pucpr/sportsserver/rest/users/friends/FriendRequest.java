@@ -33,4 +33,9 @@ public class FriendRequest {
         this.from = null;
         this.to = null;
     }
+
+    @Override
+    public int hashCode() {
+        return 1;
+    }
 }

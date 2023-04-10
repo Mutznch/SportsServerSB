@@ -73,6 +73,13 @@ public class User {
     private Set<FriendRequest> friendRequestsFromUser = new HashSet<>();
     @OneToMany(mappedBy = "to")
     private Set<FriendRequest> friendRequestsToUser = new HashSet<>();
+    @ManyToMany(cascade = CascadeType.ALL)
+    @JoinTable(name="user_friends",
+            joinColumns={@JoinColumn(name="user_id")},
+            inverseJoinColumns={@JoinColumn(name="friend_id")})
+    private Set<User> friends;
+    @ManyToMany(mappedBy = "friends")
+    private Set<User> friendsWith;
     @OneToMany(mappedBy = "leader")
     private Set<Team> ownedTeams = new HashSet<>();
     @ManyToMany(cascade = CascadeType.ALL)

@@ -150,7 +150,7 @@ public class UsersResource {
     public List<String> searchFollowingByUsername(@Valid @PathVariable("username") String username) {
         var following = service.searchFollowingByUsername(username);
         if (following.isEmpty())
-            throw new NotFoundException(username + " has not follow anyone yet");
+            throw new NotFoundException(username + " didn't follow anyone yet");
         return following;
     }
 

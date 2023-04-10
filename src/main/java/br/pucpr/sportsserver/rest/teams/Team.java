@@ -61,4 +61,9 @@ public class Team {
         newLeader.getOwnedTeams().add(this);
         leader = newLeader;
     }
+
+    @Override
+    public int hashCode() {
+        return 1;
+    }
 }
