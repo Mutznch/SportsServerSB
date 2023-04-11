@@ -16,10 +16,10 @@ public class JoinRequest {
     @GeneratedValue
     private Long id;
     @NotNull
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     private User user;
     @NotNull
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     private Team team;
     @NotNull
     private Boolean invited;

@@ -71,7 +71,7 @@ public class UsersResource {
     @Transactional
     @SecurityRequirement(name = "AuthServer")
     @RolesAllowed({"USER"})
-    public List<String> searchMeFollowers() {
+    public List<UserResponse> searchMeFollowers() {
         var user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         return service.searchFollowers(user.getId());
     }
@@ -80,20 +80,20 @@ public class UsersResource {
     @Transactional
     @SecurityRequirement(name = "AuthServer")
     @RolesAllowed({"USER"})
-    public List<String> searchMeFollowing() {
+    public List<UserResponse> searchMeFollowing() {
         var user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         return service.searchFollowing(user.getId());
     }
 
     @GetMapping("{username}/followers")
     @Transactional
-    public List<String> searchFollowersByUsername(@Valid @PathVariable("username") String username) {
+    public List<UserResponse> searchFollowersByUsername(@Valid @PathVariable("username") String username) {
         return service.searchFollowersByUsername(username);
     }
 
     @GetMapping("{username}/following")
     @Transactional
-    public List<String> searchFollowingByUsername(@Valid @PathVariable("username") String username) {
+    public List<UserResponse> searchFollowingByUsername(@Valid @PathVariable("username") String username) {
         return service.searchFollowingByUsername(username);
     }
 

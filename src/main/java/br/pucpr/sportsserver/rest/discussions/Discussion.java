@@ -19,9 +19,9 @@ import java.util.Set;
 public class Discussion {
     @Id @GeneratedValue
     private Long id;
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     private User user;
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     private Sport sport;
     @NotBlank
     @Length(min = 3, max = 40)

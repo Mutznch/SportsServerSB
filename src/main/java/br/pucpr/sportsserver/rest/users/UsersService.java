@@ -73,14 +73,16 @@ public class UsersService {
     }
 
     private void userDataExists(String username, String email, String cpf) {
-        if (usersRepository.existsByUsername(username))
+        if (username != null && usersRepository.existsByUsername(username))
             throw new BadRequestException("Username already in use");
-        if (usersRepository.existsByEmail(email))
+        if (email != null && usersRepository.existsByEmail(email))
             throw new BadRequestException("Email already in use");
-        if (usersRepository.existsByCpf(cpf))
-            throw new BadRequestException("Cpf already in use");
-        try { Long.parseLong(cpf); }
-        catch (NumberFormatException e) { throw new BadRequestException("Invalid CPF"); }
+        if (cpf != null){
+            if (usersRepository.existsByCpf(cpf))
+                throw new BadRequestException("Cpf already in use");
+            try { Long.parseLong(cpf); }
+            catch (NumberFormatException e) { throw new BadRequestException("Invalid CPF"); }
+        }
     }
 
     public UserDTO validateUser(Login credentials) {
@@ -142,13 +144,13 @@ public class UsersService {
         return userToRes(usersRepository.save(user));
     }
 
-    public List<String> searchFollowers(Long userId) {
+    public List<UserResponse> searchFollowers(Long userId) {
         return usersRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("Id \"" + userId + "\" Not Found"))
-                .getFollowers().stream().map(User::getUsername).toList();
+                .getFollowers().stream().map(this::userToRes).toList();
     }
 
-    public List<String> searchFollowersByUsername(String username) {
+    public List<UserResponse> searchFollowersByUsername(String username) {
         return searchFollowers(
                 usersRepository.findByUsername(username)
                 .orElseThrow(() -> new NotFoundException("Username \"" + username + "\" Not Found"))
@@ -156,13 +158,13 @@ public class UsersService {
         );
     }
 
-    public List<String> searchFollowing(Long userId) {
+    public List<UserResponse> searchFollowing(Long userId) {
         return usersRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("Id \"" + userId + "\" Not Found"))
-                .getFollowing().stream().map(User::getUsername).toList();
+                .getFollowing().stream().map(this::userToRes).toList();
     }
 
-    public List<String> searchFollowingByUsername(String username) {
+    public List<UserResponse> searchFollowingByUsername(String username) {
         return searchFollowing(
                 usersRepository.findByUsername(username)
                 .orElseThrow(() -> new NotFoundException("Username \"" + username + "\" Not Found"))
@@ -253,9 +255,15 @@ public class UsersService {
 
         user.getOwnedTeams().stream().toList().forEach(t -> teamsService.deleteTeam(id, t.getName()));
         user.getAllTeams().stream().toList().forEach(t -> teamsService.exitTeam(id, t.getName()));
+        user.getTeamJoinRequests().stream().toList().forEach(t -> teamsService.exitTeam(id, t.getTeam().getName()));
 
         user.getDiscussions().stream().toList().forEach(d -> discussionsService.deleteDiscussion(id, d.getId()));
         user.getReplies().stream().toList().forEach(r -> discussionsService.deleteReply(id, r.getId()));
+
+        user.getFollowing().stream().toList().forEach(f -> f.getFollowers().remove(user));
+        user.getFollowers().stream().toList().forEach(f -> f.getFollowing().remove(user));
+        user.getBlockedUsers().stream().toList().forEach(f -> f.getBlockedByOthers().remove(user));
+        user.getBlockedByOthers().stream().toList().forEach(f -> f.getBlockedUsers().remove(user));
 
         usersRepository.deleteById(id);
     }

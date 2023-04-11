@@ -54,23 +54,23 @@ public class User {
     private Set<Comment> commentsFromUser;
     @OneToMany(mappedBy = "to")
     private Set<Comment> commentsToUser;
-    @ManyToMany(cascade = CascadeType.ALL)
+    @ManyToMany
     @JoinTable(name="blocked_users",
             joinColumns={@JoinColumn(name="user_id")},
             inverseJoinColumns={@JoinColumn(name="blocked_user_id")})
     private Set<User> blockedUsers = new HashSet<>();
-    @ManyToMany(cascade = CascadeType.ALL, mappedBy = "blockedUsers")
+    @ManyToMany(mappedBy = "blockedUsers")
     private Set<User> blockedByOthers = new HashSet<>();
-    @ManyToMany(cascade = CascadeType.ALL)
+    @ManyToMany
     @JoinTable(name="user_followers",
             joinColumns={@JoinColumn(name="user_id")},
             inverseJoinColumns={@JoinColumn(name="following_user_id")})
     private Set<User> followers = new HashSet<>();
-    @ManyToMany(cascade = CascadeType.ALL, mappedBy = "followers")
+    @ManyToMany(mappedBy = "followers")
     private Set<User> following = new HashSet<>();
     @OneToMany(mappedBy = "leader")
     private Set<Team> ownedTeams = new HashSet<>();
-    @ManyToMany(cascade = CascadeType.ALL)
+    @ManyToMany
     @JoinTable(
             name = "user_team",
             joinColumns = @JoinColumn(name = "user_id"),

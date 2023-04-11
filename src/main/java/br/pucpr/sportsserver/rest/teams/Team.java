@@ -23,9 +23,9 @@ public class Team {
     @Length(min = 3, max = 30)
     @Column(unique = true)
     private String name;
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     private Sport sport;
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     private User leader;
     @ManyToMany(mappedBy = "allTeams")
     private Set<User> members = new HashSet<>();

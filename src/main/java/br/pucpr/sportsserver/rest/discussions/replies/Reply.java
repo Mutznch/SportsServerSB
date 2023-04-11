@@ -14,9 +14,9 @@ import lombok.NoArgsConstructor;
 public class Reply {
     @Id @GeneratedValue
     private Long id;
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     private Discussion discussion;
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     private User user;
     @NotBlank
     private String text;
