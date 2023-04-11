@@ -44,7 +44,7 @@ public class User {
     @NotNull
     @Min(13) @Max(120)
     private Integer age;
-    @ManyToMany(cascade = CascadeType.ALL)
+    @ManyToMany
     @JoinTable(
             name = "user_sport",
             joinColumns = @JoinColumn(name = "user_id"),

@@ -239,6 +239,8 @@ public class TeamsService {
         if (newLeader != null) {
             var leader = usersRepository.findByUsername(newLeader)
                     .orElseThrow(() -> new NotFoundException("Username \"" + newLeader + "\" Not Found"));
+            if (!leader.getAllTeams().contains(team))
+                throw new BadRequestException(newLeader + " is not a member of this team");
             team.changeLeader(leader);
         }
         if (sport != null)

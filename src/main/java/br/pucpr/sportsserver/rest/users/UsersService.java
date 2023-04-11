@@ -248,7 +248,7 @@ public class UsersService {
         user.getCommentsFromUser().forEach(c -> commentsService.deleteById(c.getId()));
         user.getCommentsToUser().forEach(c -> commentsService.deleteById(c.getId()));
 
-        user.getSports().forEach(s -> s.getUsers().remove(this));
+        user.getSports().forEach(s -> s.getUsers().remove(user));
         user.getSports().clear();
 
         user.getOwnedTeams().stream().toList().forEach(t -> teamsService.deleteTeam(id, t.getName()));
