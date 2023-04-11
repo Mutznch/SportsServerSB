@@ -73,10 +73,7 @@ public class UsersResource {
     @RolesAllowed({"USER"})
     public List<String> searchMeFollowers() {
         var user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        var followers = service.searchFollowers(user.getId());
-        if (followers.isEmpty())
-            throw new NotFoundException("You have no followers yet");
-        return followers;
+        return service.searchFollowers(user.getId());
     }
 
     @GetMapping("following")
@@ -85,28 +82,19 @@ public class UsersResource {
     @RolesAllowed({"USER"})
     public List<String> searchMeFollowing() {
         var user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        var following = service.searchFollowing(user.getId());
-        if (following.isEmpty())
-            throw new NotFoundException("You haven't follow anyone yet");
-        return following;
+        return service.searchFollowing(user.getId());
     }
 
     @GetMapping("{username}/followers")
     @Transactional
     public List<String> searchFollowersByUsername(@Valid @PathVariable("username") String username) {
-        var followers = service.searchFollowersByUsername(username);
-        if (followers.isEmpty())
-            throw new NotFoundException(username + " has no followers yet");
-        return followers;
+        return service.searchFollowersByUsername(username);
     }
 
     @GetMapping("{username}/following")
     @Transactional
     public List<String> searchFollowingByUsername(@Valid @PathVariable("username") String username) {
-        var following = service.searchFollowingByUsername(username);
-        if (following.isEmpty())
-            throw new NotFoundException(username + " didn't follow anyone yet");
-        return following;
+        return service.searchFollowingByUsername(username);
     }
 
     @GetMapping("blocked")
@@ -115,10 +103,7 @@ public class UsersResource {
     @RolesAllowed({"USER"})
     public List<String> searchBlocked() {
         var user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        var blocked = service.searchBlocked(user.getId());
-        if (blocked.isEmpty())
-            throw new NotFoundException("You have no blocked users");
-        return blocked;
+        return service.searchBlocked(user.getId());
     }
 
     @PostMapping("follow/{username}")
