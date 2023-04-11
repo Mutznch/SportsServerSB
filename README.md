@@ -5,9 +5,10 @@ Nome do projeto: Match
 
 Integrantes: Félix Augustus Motelevicz
 
-Link do vídeo: ""
+Link do vídeo: "https://www.youtube.com/watch?v=qnb2MDRCEQo"
 
 Como executar:
+
   Para executar o programa, crie um novo projeto java utilizando o IntelliJ e jogue os
   arquivos e pastas deste repositório na pasta do projeto recem criado.
   
